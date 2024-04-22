@@ -1,5 +1,6 @@
 import heapq
 import time
+import random
 
 class Node:
     def __init__(self, state, parent, move, depth, cost):
@@ -14,9 +15,10 @@ class Node:
 
 def calculate_heuristic(state, goal):
     count = 0
-    for i in range(len(state)):
-        for j in range(len(state[i])):
-            if state[i][j] != 0 and state[i][j] != goal[i*len(state) + j]:
+    n = len(state)
+    for i in range(n):
+        for j in range(n):
+            if state[i][j] != 0 and state[i][j] != goal[i][j]:
                 count += 1
     return count
 
@@ -36,8 +38,9 @@ def get_neighbors(node):
             neighbors.append((new_state, move))
     return neighbors
 
-def least_cost_search(initial_state):
-    initial_cost = calculate_heuristic(initial_state)
+def least_cost_search(initial_state, goal_state):
+    n = len(initial_state)
+    initial_cost = calculate_heuristic(initial_state, goal_state)
     root = Node(state=initial_state, parent=None, move=None, depth=0, cost=initial_cost)
     frontier = []
     heapq.heappush(frontier, root)
@@ -47,40 +50,93 @@ def least_cost_search(initial_state):
         current_node = heapq.heappop(frontier)
         current_state = current_node.state
 
-        if current_state == sorted(current_state, key=lambda x: (x != 0, x)):
+        if current_state == goal_state:
             return current_node  # Found the solution
 
-        # Expand the node (implement moving the blank space)
-        # Add new states to the frontier with updated costs
+        visited.add(tuple(tuple(row) for row in current_state))  # Track visited states
+
+        for new_state, move in get_neighbors(current_node):
+            if tuple(tuple(row) for row in new_state) not in visited:
+                new_cost = calculate_heuristic(new_state, goal_state)
+                new_node = Node(state=new_state, parent=current_node, move=move, depth=current_node.depth + 1, cost=current_node.depth + 1 + new_cost)
+                heapq.heappush(frontier, new_node)
 
     return None  # If no solution is found
 
+# Function to generate random initial states
+# def generate_random_initial_states(num_states, n):
+#     initial_states = []
+#     base_list = list(range(1, n*n)) + [0]  # 1 to n*n-1 and 0 for the blank space
 
+#     for _ in range(num_states):
+#         random.shuffle(base_list)  # Randomly shuffle the numbers
+#         # Split the list into n lists of n elements each to create an n x n grid
+#         state = [base_list[i:i+n] for i in range(0, n*n, n)]
+#         initial_states.append(state)
+    
+#     return initial_states
 
 def print_solution(node):
     path = []
     while node:
-        path.append(node.state)
+        path.append((node.move, node.state))
         node = node.parent
     path.reverse()
-    for state in path:
+    for move, state in path:
+        print(f"Move: {move}")
         for row in state:
             print(row)
         print('-------')
 
+# Define goal state and test
+n = 4
+goal_state = [list(range(1 + i * n, 1 + (i + 1) * n)) for i in range(n)]
+goal_state[-1][-1] = 0  # set the last element as the blank
 
 # Testing
 # Example of initial configuration
 initial_states = [
-    [[1, 2, 3, 4], [5, 6, 0, 8], [9, 10, 7, 12], [13, 14, 11, 15]],
-    # Add more test states here
+    [
+    [1, 2, 3, 4], 
+    [5, 6, 0, 8], 
+    [9, 10, 7, 12], 
+    [13, 14, 11, 15]
+    ],  
+    [
+    [5, 2, 3, 4], 
+    [1, 6, 0, 8], 
+    [9, 10, 7, 11], 
+    [13, 14, 15, 12]
+    ],
+    [
+    [1, 6, 2, 4], 
+    [5, 10, 3, 8], 
+    [9, 13, 7, 11], 
+    [14, 0, 15, 12]
+    ],
+    [
+    [1, 2, 3, 4], 
+    [5, 6, 7, 8], 
+    [9, 10, 11, 0], 
+    [13, 14, 15, 12]
+    ],
+    [
+    [1, 6, 2, 3], 
+    [9, 5, 7, 4], 
+    [13, 10, 11, 8], 
+    [0, 14, 15, 12]
+    ]
 ]
 
-for state in initial_states:
+
+# Loop through each initial configuration to find the solution
+for initial_state in initial_states:
     start_time = time.time()
-    solution_node = least_cost_search(state)
+    solution_node = least_cost_search(initial_state, goal_state)
     end_time = time.time()
-    # Output the path and time
+
     if solution_node:
-        print("Solution found in {:.2f} seconds".format(end_time - start_time))
-        # Backtrack and print path if required
+        print(f"Solution found for initial state {initial_states.index(initial_state)} in {end_time - start_time:.2f} seconds")
+        print_solution(solution_node)
+    else:
+        print(f"No solution found for initial state {initial_states.index(initial_state)}.")
