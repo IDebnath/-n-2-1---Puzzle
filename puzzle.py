@@ -130,13 +130,16 @@ initial_states = [
 
 
 # Loop through each initial configuration to find the solution
-for initial_state in initial_states:
-    start_time = time.time()
-    solution_node = least_cost_search(initial_state, goal_state)
-    end_time = time.time()
+for index, initial_state in enumerate(initial_states):
+    try:
+        start_time = time.time()
+        solution_node = least_cost_search(initial_state, goal_state)
+        end_time = time.time()
 
-    if solution_node:
-        print(f"Solution found for initial state {initial_states.index(initial_state)} in {end_time - start_time:.2f} seconds")
-        print_solution(solution_node)
-    else:
-        print(f"No solution found for initial state {initial_states.index(initial_state)}.")
+        if solution_node:
+            print(f"Solution found for initial state {index} in {end_time - start_time:.2f} seconds")
+            print_solution(solution_node)
+        else:
+            print(f"No solution found for initial state {index}.")
+    except Exception as e:
+        print(f"An error occurred with initial state {index}: {str(e)}")
